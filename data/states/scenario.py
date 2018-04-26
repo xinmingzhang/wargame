@@ -5,6 +5,8 @@ from ..tools.label import Label
 from .. import constants as C
 from ..components.editor_hud import Hud
 from ..components.piece import Piece
+from ..tools.button import ButtonGroup,Button
+
 
 class Editor(Screen):
     def __init__(self):
@@ -18,27 +20,44 @@ class Editor(Screen):
         self.grab_image = False
         self.moving_piece = None
         self.image_piece = pg.sprite.Group()
+        self.pieces_dict = {}
+        self.make_buttons()
+
+    def make_buttons(self):
+        self.buttons = ButtonGroup()
+        Button((1100,700),self.buttons,text = '进入推演',button_size = (250,50),font_size = 40,fill_color = C.BLUE,font = FONTS['song'],call=self._call,args = 'editor')
+
+    def _call(self, args):
+        print('gellll')
+        # self.done = True
+        # self.next = args
 
 
     def draw(self, surface):
         self.orig_map = GFX['六角格新4']
-        self.image_piece.draw(self.orig_map)
-        orig_rect = self.orig_map.get_rect()
+        self.display_map = self.orig_map.copy()
+        self.image_piece.draw(self.display_map)
+        orig_rect = self.display_map.get_rect()
         w = int(orig_rect.width * self.scale/100.0)
         h = int(orig_rect.height * self.scale/100.0)
-        self.map = pg.transform.smoothscale(self.orig_map,(w,h))
+        self.map = pg.transform.smoothscale(self.display_map,(w,h))
         surface.fill((255,255,255))
         surface.blit(self.map,self.translate)
         if self.moving_piece:
             self.moving_piece.draw(surface)
         self.hud.draw(surface)
+        self.buttons.draw(surface)
 
     def update(self,dt):
-        pass
+        self.hud.update(dt)
+        self.image_piece.update(dt)
+        mouse_pos = pg.mouse.get_pos()
+        self.buttons.update(mouse_pos)
 
 
 
     def get_event(self,event):
+        self.buttons.get_event(event)
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 5:
                 if self.map_rect.collidepoint(*event.pos):
@@ -48,8 +67,15 @@ class Editor(Screen):
                     self.change_map_scale('decrease',event.pos)
             if event.button == 1:
                 if self.map_rect.collidepoint(*event.pos):
-                    self.grab_map = True
-                    print(self.get_tile_label(event.pos))
+                    a, b = self.get_tile_label(event.pos)
+                    if self.pieces_dict.get((a,b)):
+                        spr= self.pieces_dict.get((a,b))
+                        self.moving_piece = Piece(spr.num, (-1, -1))
+                        spr.kill()
+                        self.pieces_dict.pop((a, b))
+                        self.grab_image = True
+                    else:
+                        self.grab_map = True
                 elif self.hud_rect.collidepoint(*event.pos):
                     self.hud.get_event(event)
         if event.type == pg.MOUSEBUTTONUP:
@@ -57,9 +83,11 @@ class Editor(Screen):
             if self.moving_piece:
                 a,b = self.get_tile_label(event.pos)
                 if a != -1 and b!=-1:
-                    Piece(self.moving_piece.num,(a,b),self.image_piece)
+                    if not self.pieces_dict.get((a,b)):
+                        self.pieces_dict[(a,b)] = Piece(self.moving_piece.num,(a,b),self.image_piece)
                 self.grab_image = False
                 self.moving_piece = None
+
         if event.type == pg.MOUSEMOTION:
             if self.grab_map:
                 self.translate_map(event)

@@ -190,6 +190,7 @@ class Button(pg.sprite.Sprite, _KwargMixin):
         if self.hover or onkey:
             self.clicked = True
             if not self.call_on_up:
+
                 self.click_sound and self.click_sound.play()
                 self.call and self.call(self.args or self.text)
 
