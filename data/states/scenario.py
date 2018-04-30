@@ -28,9 +28,11 @@ class Editor(Screen):
         Button((1100,700),self.buttons,text = '进入推演',button_size = (250,50),font_size = 40,fill_color = C.BLUE,font = FONTS['song'],call=self._call,args = 'editor')
 
     def _call(self, args):
-        print('gellll')
-        # self.done = True
-        # self.next = args
+        self.done = True
+        self.next = 'game'
+
+    def cleanup(self):
+        return self.pieces_dict
 
 
     def draw(self, surface):
