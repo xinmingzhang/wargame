@@ -45,9 +45,52 @@ MAP_DATA  = {'0101': [10, 'clear'], '0102': [10, 'clear'], '0103': [10, 'clear']
  '1511': [10, 'clear'], '1512': [10, 'clear'], '1513': [10, 'clear'], '1514': [10, 'clear'], '1515': [10, 'clear']}
 
 
+
+
+import queue
+
+def int_to_str(x,y):
+    if (x <1 or x >15) or (y <1 or y > 15):
+        return None
+    else:
+        a = str(x) if x> 9 else '0'+str(x)
+        b = str(y) if y >9 else '0'+str(y)
+        return a + b
+
+
 def tile_neighbours(tile):
     n = []
     x, y = int(tile[:2]),int(tile[2:])
-    n1 = str(x-1)
-    n.append()
+    n1 = int_to_str(x,y-1)
+    n2 = int_to_str(x,y+1)
+    n.extend([n1,n2])
+    if x %2 ==0:
+        n3 = int_to_str(x-1,y)
+        n4 = int_to_str(x-1,y+1)
+        n5 = int_to_str(x+1,y)
+        n6 = int_to_str(x+1,y+1)
+    elif x%2 ==1:
+        n3 = int_to_str(x-1,y)
+        n4 = int_to_str(x-1,y-1)
+        n5 = int_to_str(x+1,y)
+        n6 = int_to_str(x+1,y-1)
+    n.extend([n3,n4,n5,n6])
+    neighbours = [neighbour for neighbour in n if neighbour]
+    return neighbours
+
+def min_path(start,end):
+    pass
+
+def cal_cost(current,next):
+    if MAP_DATA[current][1] == 'road' and
+
+
+
+if __name__ == '__main__':
+    items = [3, 1, 2,4,]
+    pq = queue.PriorityQueue()
+    q = queue.Queue()
+    for element in items:
+        pq.put(element)
+    print(pq.get())
 

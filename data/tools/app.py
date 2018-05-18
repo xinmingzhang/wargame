@@ -9,7 +9,7 @@ class App(object):
 
     def __init__(self):
         pg.display.set_caption(c.CAPTION)
-        self.screen = pg.display.set_mode((1800,1000),pg.FULLSCREEN)
+        self.screen = pg.display.set_mode(c.SCREEN_SIZE)
         self.done = False
         self.clock = pg.time.Clock()
         self.fps = c.FPS

@@ -29,8 +29,12 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 CYAN = (0,255,255)
 BLUE = (0,0,255)
+RED = (255,0,0)
+GREEN = (0,255,0)
 
 # 时间设定
 
 DICE_TIME = 10
+
+MOVEMENT_TIME = 30
 

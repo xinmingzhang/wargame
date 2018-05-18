@@ -9,8 +9,9 @@ def main():
     from .states.scenario import Editor
     from .states.help import Help
     from .states.lobby import Lobby
-    from .states.game import Game
-    states = {'title':Title(),'editor':Editor(),'help':Help(),'lobby':Lobby(),'game':Game()}
+    from .states.movement import Movement
+    from .states.dice_screen import DiceScreen
+    states = {'title':Title(),'editor':Editor(),'help':Help(),'lobby':Lobby(),'dice':DiceScreen(),'movement':Movement()}
     game.screen_manager.setup_states('title',states)
     game.run()
     pg.quit()

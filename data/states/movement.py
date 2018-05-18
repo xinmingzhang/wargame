@@ -3,14 +3,16 @@ from ..tools.load import GFX,FONTS
 from ..tools.screenmanager import Screen
 from ..tools.label import Label
 from .. import constants as C
-from ..components.editor_hud import Hud
+from ..components.game_hud import Hud
 from ..components.piece import Piece
 from ..tools.button import ButtonGroup,Button
 
 
-class Editor(Screen):
+class Movement(Screen):
+    turn = ['red','blue']
+
     def __init__(self):
-        super(Editor, self).__init__()
+        super(Movement, self).__init__()
         self.scale = C.DEFAULT_SCALE
         self.translate = [0,0]
         self.grab_map = False
@@ -19,17 +21,47 @@ class Editor(Screen):
         self.hud_rect = pg.Rect(C.HUD_RECT)
         self.grab_image = False
         self.moving_piece = None
+        self.red = pg.sprite.Group()
+        self.blue = pg.sprite.Group()
+        self.red_pieces_dict = {}
+        self.blue_pieces_dict = {}
         self.image_piece = pg.sprite.Group()
         self.pieces_dict = {}
+        self.labels = pg.sprite.Group()
+        self.hint_label = Label('', {'topleft': (1100, 100)}, self.labels, font_size=40, font_path=FONTS['song'])
+        self.time_count_down_label = Label('0', {'topleft': (1200, 50)}, self.labels, font_size=40,
+                                           font_path=FONTS['song'])
         self.make_buttons()
+
+    def startup(self, persist):
+        self.all_moved = False
+        self.timer = C.MOVEMENT_TIME
+        self.persist = persist
+        self.turn = self.persist['turn']
+        pieces = self.persist['pieces']
+        for key in pieces:
+            if pieces[key].num <20:
+                self.red_pieces_dict[key] = Piece(pieces[key].num,key,self.red)
+            else:
+                self.blue_pieces_dict[key] = Piece(pieces[key].num, key, self.blue)
+
+    def change_turn(self,*args):
+        if self.all_moved == True:
+            # self.done = True
+            print('end')
+        elif self.all_moved == False:
+            if self.turn == 'red':
+                self.turn = 'blue'
+                self.timer = C.MOVEMENT_TIME
+            elif self.turn == 'blue':
+                self.turn = 'red'
+                self.timer = C.MOVEMENT_TIME
+            self.all_moved = True
 
     def make_buttons(self):
         self.buttons = ButtonGroup()
-        Button((1100,700),self.buttons,text = '进入推演',button_size = (250,50),font_size = 40,fill_color = C.BLUE,font = FONTS['song'],call=self._call,args = 'dice')
+        Button((1100,700),self.buttons,text = '结束环节',button_size = (250,50),font_size = 40,fill_color = C.BLUE,font = FONTS['song'],call=self.change_turn)
 
-    def _call(self, args):
-        self.done = True
-        self.next = 'dice'
 
     def cleanup(self):
         return self.pieces_dict
@@ -38,7 +70,8 @@ class Editor(Screen):
     def draw(self, surface):
         self.orig_map = GFX['六角格新4']
         self.display_map = self.orig_map.copy()
-        self.image_piece.draw(self.display_map)
+        self.red.draw(self.display_map)
+        self.blue.draw(self.display_map)
         orig_rect = self.display_map.get_rect()
         w = int(orig_rect.width * self.scale/100.0)
         h = int(orig_rect.height * self.scale/100.0)
@@ -48,15 +81,28 @@ class Editor(Screen):
         if self.moving_piece:
             self.moving_piece.draw(surface)
         self.hud.draw(surface)
+        self.labels.draw(surface)
         self.buttons.draw(surface)
 
     def update(self,dt):
+        if self.turn == 'red':
+            self.hint_label.text_color = C.RED
+            self.hint_label.set_text('红方机动环节')
+        elif self.turn == 'blue':
+            self.hint_label.text_color = C.BLUE
+            self.hint_label.set_text('蓝方机动环节')
         self.hud.update(dt)
+        self.count_down_time(dt)
         self.image_piece.update(dt)
         mouse_pos = pg.mouse.get_pos()
         self.buttons.update(mouse_pos)
 
-
+    def count_down_time(self,dt):
+        self.timer -= dt /1000
+        time = int((self.timer - dt / 1000)+1)
+        if time <= 0:
+            self.change_turn()
+        self.time_count_down_label.set_text(str(time))
 
     def get_event(self,event):
         self.buttons.get_event(event)
