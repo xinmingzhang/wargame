@@ -6,10 +6,12 @@ from .. import constants as C
 from ..components.game_hud import Hud
 from ..components.piece import Piece
 from ..tools.button import ButtonGroup,Button
+from ..tools.path_finding import a_start_path,int_to_str,str_to_tuple
 
 
 class Movement(Screen):
     turn = ['red','blue']
+
 
     def __init__(self):
         super(Movement, self).__init__()
@@ -19,19 +21,22 @@ class Movement(Screen):
         self.hud = Hud(self)
         self.map_rect = pg.Rect(C.MAP_RECT)
         self.hud_rect = pg.Rect(C.HUD_RECT)
-        self.grab_image = False
+        self.grab_piece = False
         self.moving_piece = None
         self.red = pg.sprite.Group()
         self.blue = pg.sprite.Group()
         self.red_pieces_dict = {}
         self.blue_pieces_dict = {}
-        self.image_piece = pg.sprite.Group()
-        self.pieces_dict = {}
+        self.moving = False
+        self.destination = None
+        self.path = []
         self.labels = pg.sprite.Group()
         self.hint_label = Label('', {'topleft': (1100, 100)}, self.labels, font_size=40, font_path=FONTS['song'])
         self.time_count_down_label = Label('0', {'topleft': (1200, 50)}, self.labels, font_size=40,
                                            font_path=FONTS['song'])
         self.make_buttons()
+        self.moving_timer = 1000
+        self.moving_time = 0
 
     def startup(self, persist):
         self.all_moved = False
@@ -78,8 +83,8 @@ class Movement(Screen):
         self.map = pg.transform.smoothscale(self.display_map,(w,h))
         surface.fill((255,255,255))
         surface.blit(self.map,self.translate)
-        if self.moving_piece:
-            self.moving_piece.draw(surface)
+        # if self.moving_piece:
+        #     self.moving_piece.draw(surface)
         self.hud.draw(surface)
         self.labels.draw(surface)
         self.buttons.draw(surface)
@@ -93,9 +98,9 @@ class Movement(Screen):
             self.hint_label.set_text('蓝方机动环节')
         self.hud.update(dt)
         self.count_down_time(dt)
-        self.image_piece.update(dt)
         mouse_pos = pg.mouse.get_pos()
         self.buttons.update(mouse_pos)
+        self.move_piece(self.destination,dt)
 
     def count_down_time(self,dt):
         self.timer -= dt /1000
@@ -116,32 +121,48 @@ class Movement(Screen):
             if event.button == 1:
                 if self.map_rect.collidepoint(*event.pos):
                     a, b = self.get_tile_label(event.pos)
-                    if self.pieces_dict.get((a,b)):
-                        spr= self.pieces_dict.get((a,b))
-                        self.moving_piece = Piece(spr.num, (-1, -1))
+                    if self.turn == 'red' and self.red_pieces_dict.get((a,b)):
+                        self.grab_piece = True
+                        spr = self.red_pieces_dict.get((a,b))
                         spr.kill()
-                        self.pieces_dict.pop((a, b))
-                        self.grab_image = True
+                        self.red_pieces_dict[spr.num] = Piece(spr.num, spr.co, self.red)
+                        self.moving_piece = self.red_pieces_dict[spr.num]
+                    elif self.turn == 'blue' and self.blue_pieces_dict.get((a,b)):
+                        self.grab_piece = True
+                        spr = self.blue_pieces_dict.get((a,b))
+                        spr.kill()
+                        self.blue_pieces_dict[spr.num] = Piece(spr.num, spr.co, self.red)
+                        self.moving_piece = self.blue_pieces_dict[spr.num]
                     else:
                         self.grab_map = True
                 elif self.hud_rect.collidepoint(*event.pos):
                     self.hud.get_event(event)
+
+            if event.button == 3:
+                if self.grab_piece == True:
+                    self.moving = True
+                    a,b = self.get_tile_label(event.pos)
+                    self.destination = (a,b)
+                    path = a_start_path(int_to_str(self.moving_piece.co[0], self.moving_piece.co[1]), int_to_str(a, b))[1]
+                    path = [str_to_tuple(p) for p in path]
+                    self.path = iter(path)
+
         if event.type == pg.MOUSEBUTTONUP:
             self.grab_map = False
-            if self.moving_piece:
-                a,b = self.get_tile_label(event.pos)
-                if a != -1 and b!=-1:
-                    if not self.pieces_dict.get((a,b)):
-                        self.pieces_dict[(a,b)] = Piece(self.moving_piece.num,(a,b),self.image_piece)
-                self.grab_image = False
-                self.moving_piece = None
+            # if self.moving_piece:
+            #     a,b = self.get_tile_label(event.pos)
+            #     if a != -1 and b!=-1:
+            #         if not self.pieces_dict.get((a,b)):
+            #             self.pieces_dict[(a,b)] = Piece(self.moving_piece.num,(a,b),self.image_piece)
+            #     self.grab_piece = False
+            #     self.moving_piece = None
 
         if event.type == pg.MOUSEMOTION:
             if self.grab_map:
                 self.translate_map(event)
-            if self.grab_image:
-                if self.moving_piece:
-                    self.moving_piece.rect.center = event.pos
+            # if self.grab_piece:
+            #     if self.moving_piece:
+            #         self.moving_piece.rect.center = event.pos
 
 
 
@@ -168,6 +189,7 @@ class Movement(Screen):
         delta_x, delta_y = orig_x - trans_x, orig_y - trans_y
         self.translate[0] += delta_x
         self.translate[1] += delta_y
+
 
 
 
@@ -256,4 +278,22 @@ class Movement(Screen):
         # column += right
         # return (column,row)
 
-
+    def move_piece(self,end,dt):
+        if self.moving_piece:
+            if self.moving_piece.label == end:
+                self.moving = False
+                self.moving_piece = None
+                self.grab_piece = False
+            if self.moving == True:
+                self.moving_time += dt
+                if self.moving_time >= self.moving_timer:
+                    self.moving_time-= self.moving_timer
+                    p = next(self.path)
+                    if self.moving_piece.num <20:
+                        self.moving_piece.kill()
+                        self.red_pieces_dict[p] = Piece(self.moving_piece.num, p, self.red)
+                        self.moving_piece = self.red_pieces_dict[p]
+                    else:
+                        self.moving_piece.kill()
+                        self.blue_pieces_dict[p] = Piece(self.moving_piece.num, p, self.red)
+                        self.moving_piece = self.blue_pieces_dict[p]

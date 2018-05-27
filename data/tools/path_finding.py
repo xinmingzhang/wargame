@@ -49,7 +49,18 @@ MAP_DATA  = {'0101': [10, 'clear'], '0102': [10, 'clear'], '0103': [10, 'clear']
 
 import queue
 
+
+def str_to_tuple(str):
+    return(int(str[:2]),int(str[2:]))
+
 def int_to_str(x,y):
+    '''
+    行列换算成格标签，比如int_to_str(6,6)返回第6列第6行的格子编号
+    结果是'0606'
+    :param x:
+    :param y:
+    :return:
+    '''
     if (x <1 or x >15) or (y <1 or y > 15):
         return None
     else:
@@ -57,8 +68,14 @@ def int_to_str(x,y):
         b = str(y) if y >9 else '0'+str(y)
         return a + b
 
-
 def tile_neighbours(tile):
+    '''
+    返回相邻的6个格标签,如果在边角处不一定是6个
+    比如 tile_neighbours('0101')返回'0101'相邻的格子编号
+    结果是 ['0102','0201']
+    :param tile:
+    :return:
+    '''
     n = []
     x, y = int(tile[:2]),int(tile[2:])
     n1 = int_to_str(x,y-1)
@@ -78,19 +95,71 @@ def tile_neighbours(tile):
     neighbours = [neighbour for neighbour in n if neighbour]
     return neighbours
 
-def min_path(start,end):
-    pass
 
-def cal_cost(current,next):
-    if MAP_DATA[current][1] == 'road' and
+def mp_cost(current,next):
+    '''
+    计算进入格子消耗的机动力值，比如从'0603'移动到'0704'
+    mp_cost('0603','0704')，返回3，说明消耗3机动力值
+    :param current:
+    :param next:
+    :return:
+    '''
+    if MAP_DATA[current][1] == 'road' and MAP_DATA[next][1] == 'road':
+        return 0.5
+    elif MAP_DATA[next][1] in ('forest','stream'):
+        return 2
+    elif MAP_DATA[next][1] == 'town':
+        return 3
+    elif MAP_DATA[next][0] == 20:
+        return 2
+    elif MAP_DATA[next][0] == 30:
+        return 3
+    else:
+        return 1
 
+def heuristic(current,next):
+    '''
+    启发式算法，可以自定义，这里是简单的计算距离
+    比如heuristic('0101','0102'),返回'0101'到'0102'的距离,返回1
+    :param current:
+    :param next:
+    :return:
+    '''
+    x_1, y_1 = int(current[:2]), int(current[2:])
+    x_2,y_2 = int(next[:2]),int(next[2:])
+    return abs(x_1-x_2) + abs(y_1 - y_2)
 
-
-if __name__ == '__main__':
-    items = [3, 1, 2,4,]
-    pq = queue.PriorityQueue()
-    q = queue.Queue()
-    for element in items:
-        pq.put(element)
-    print(pq.get())
+def a_start_path(start,end):
+    '''
+    A*算法，注释掉碰到目标停止，继续遍历找到最优解，纯A*寻路不用注释掉
+    返回消耗的机动力值和格子序列
+    :param start:
+    :param end:
+    :return:
+    '''
+    frontier = queue.PriorityQueue()
+    frontier.put((0,start))
+    came_from = {}
+    cost_so_far = {}
+    came_from[start] = start
+    cost_so_far[start] = 0
+    while not frontier.empty():
+        current = frontier.get()[1]
+##        if current == end:
+##            break
+        for next in tile_neighbours(current):
+            new_cost = cost_so_far[current] + mp_cost(current, next)
+            if next not in cost_so_far or new_cost < cost_so_far[next]:
+                cost_so_far[next] = new_cost
+                priority = new_cost + heuristic(end, next)
+                frontier.put((priority,next))
+                came_from[next] = current
+    min_mp = cost_so_far[end]
+    path = []
+    node = end
+    while node != start:
+        path.append(node)
+        node = came_from[node]
+    path.reverse()
+    return  min_mp, path
 

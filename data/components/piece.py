@@ -21,18 +21,34 @@ class Piece(pg.sprite.Sprite):
         name = Piece.category[self.num]
         self.image = GFX[name]
         self.rect = self.image.get_rect()
-        if self.co:
-            a = self.co[0]-1
-            b = self.co[1]-1
-            if a % 2 == 0:
-                center =(a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT +C.TILE_HEIGHT/2)
-            elif a%2 ==1:
-                center = (a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT + C.TILE_HEIGHT)
-            self.rect.center = center
+        self.update(1)
+        # if self.co:
+        #     a = self.co[0]-1
+        #     b = self.co[1]-1
+        #     if a % 2 == 0:
+        #         center =(a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT +C.TILE_HEIGHT/2)
+        #     elif a%2 ==1:
+        #         center = (a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT + C.TILE_HEIGHT)
+        #     self.rect.center = center
+        # self.co_x = self.co[0]
+        # self.co_y = self.co[1]
 
+    def update(self,dt):
+        a = self.co[0] - 1
+        b = self.co[1] - 1
+        if a % 2 == 0:
+            center = (a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT + C.TILE_HEIGHT / 2)
+        elif a % 2 == 1:
+            center = (a * C.TILE_WIDTH * 3 / 4 + C.TILE_WIDTH / 2, b * C.TILE_HEIGHT + C.TILE_HEIGHT)
+        self.rect.center = center
 
     def draw(self,surface):
         surface.blit(self.image,self.rect)
+
+
+    @property
+    def label(self):
+        return (self.co[0],self.co[1])
 
 class MPiece(Piece):
     def __init__(self,num,co,*group):
