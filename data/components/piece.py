@@ -18,8 +18,8 @@ class Piece(pg.sprite.Sprite):
         super(Piece,self).__init__(*group)
         self.co = co
         self.num = num
-        name = Piece.category[self.num]
-        self.image = GFX[name]
+        self.name = Piece.category[self.num]
+        self.image = GFX[self.name]
         self.rect = self.image.get_rect()
         self.update(1)
         # if self.co:

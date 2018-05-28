@@ -92,8 +92,8 @@ class DiceScreen(Screen):
         self.map = pg.transform.smoothscale(self.display_map,(w,h))
         surface.fill((255,255,255))
         surface.blit(self.map,self.translate)
-        if self.moving_piece:
-            self.moving_piece.draw(surface)
+        # if self.moving_piece:
+        #     self.moving_piece.draw(surface)
         self.hud.draw(surface)
         self.labels.draw(surface)
         self.buttons.draw(surface)

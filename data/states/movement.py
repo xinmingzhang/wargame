@@ -34,6 +34,8 @@ class Movement(Screen):
         self.hint_label = Label('', {'topleft': (1100, 100)}, self.labels, font_size=40, font_path=FONTS['song'])
         self.time_count_down_label = Label('0', {'topleft': (1200, 50)}, self.labels, font_size=40,
                                            font_path=FONTS['song'])
+        self.moving_piece_label = Label('', {'topleft': (1050, 200)}, self.labels, font_size=40, font_path=FONTS['song'])
+        self.destination_label = Label('', {'topleft': (1050, 300)}, self.labels, font_size=40, font_path=FONTS['song'])
         self.make_buttons()
         self.moving_timer = 1000
         self.moving_time = 0
@@ -101,6 +103,7 @@ class Movement(Screen):
         mouse_pos = pg.mouse.get_pos()
         self.buttons.update(mouse_pos)
         self.move_piece(self.destination,dt)
+        self.update_moving_piece_label()
 
     def count_down_time(self,dt):
         self.timer -= dt /1000
@@ -125,14 +128,17 @@ class Movement(Screen):
                         self.grab_piece = True
                         spr = self.red_pieces_dict.get((a,b))
                         spr.kill()
-                        self.red_pieces_dict[spr.num] = Piece(spr.num, spr.co, self.red)
-                        self.moving_piece = self.red_pieces_dict[spr.num]
+                        self.red_pieces_dict[spr.label] = Piece(spr.num, spr.co, self.red)
+                        self.moving_piece = self.red_pieces_dict[spr.label]
+
+
                     elif self.turn == 'blue' and self.blue_pieces_dict.get((a,b)):
                         self.grab_piece = True
                         spr = self.blue_pieces_dict.get((a,b))
                         spr.kill()
-                        self.blue_pieces_dict[spr.num] = Piece(spr.num, spr.co, self.red)
-                        self.moving_piece = self.blue_pieces_dict[spr.num]
+                        self.blue_pieces_dict[spr.label] = Piece(spr.num, spr.co, self.red)
+                        self.moving_piece = self.blue_pieces_dict[spr.label]
+
                     else:
                         self.grab_map = True
                 elif self.hud_rect.collidepoint(*event.pos):
@@ -280,7 +286,7 @@ class Movement(Screen):
 
     def move_piece(self,end,dt):
         if self.moving_piece:
-            if self.moving_piece.label == end:
+            if self.moving == True and self.moving_piece.label == end:
                 self.moving = False
                 self.moving_piece = None
                 self.grab_piece = False
@@ -291,9 +297,27 @@ class Movement(Screen):
                     p = next(self.path)
                     if self.moving_piece.num <20:
                         self.moving_piece.kill()
+                        self.red_pieces_dict.pop(self.moving_piece.label)
                         self.red_pieces_dict[p] = Piece(self.moving_piece.num, p, self.red)
                         self.moving_piece = self.red_pieces_dict[p]
                     else:
                         self.moving_piece.kill()
                         self.blue_pieces_dict[p] = Piece(self.moving_piece.num, p, self.red)
                         self.moving_piece = self.blue_pieces_dict[p]
+
+
+    def update_moving_piece_label(self):
+        if self.turn == 'red':
+            self.moving_piece_label.text_color = C.RED
+            self.destination_label.text_color = C.RED
+        elif self.turn == 'blue':
+            self.moving_piece_label.text_color = C.BLUE
+            self.destination_label.text_color = C.BLUE
+        if self.grab_piece == True:
+            self.moving_piece_label.set_text(self.moving_piece.name)
+        elif self.grab_piece == False:
+            self.moving_piece_label.set_text('')
+        if self.moving == True and self.moving_piece:
+            self.destination_label.set_text('移动至 {}'.format(self.destination))
+        else:
+            self.destination_label.set_text('')
