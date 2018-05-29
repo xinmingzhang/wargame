@@ -11,7 +11,8 @@ def main():
     from .states.lobby import Lobby
     from .states.movement import Movement
     from .states.dice_screen import DiceScreen
-    states = {'title':Title(),'editor':Editor(),'help':Help(),'lobby':Lobby(),'dice':DiceScreen(),'movement':Movement()}
+    from .states.fire import Fire
+    states = {'title':Title(),'editor':Editor(),'help':Help(),'lobby':Lobby(),'dice':DiceScreen(),'movement':Movement(),'fire':Fire()}
     game.screen_manager.setup_states('title',states)
     game.run()
     pg.quit()

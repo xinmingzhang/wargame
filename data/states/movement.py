@@ -54,8 +54,9 @@ class Movement(Screen):
 
     def change_turn(self,*args):
         if self.all_moved == True:
-            # self.done = True
-            print('end')
+            self.done = True
+            self.next = 'fire'
+
         elif self.all_moved == False:
             if self.turn == 'red':
                 self.turn = 'blue'
@@ -71,7 +72,15 @@ class Movement(Screen):
 
 
     def cleanup(self):
-        return self.pieces_dict
+        persist ={}
+        if self.turn == 'red':
+            persist['turn'] = 'blue'
+        elif self.turn == 'blue':
+            persist['turn'] = 'red'
+        persist['pieces'] = self.red_pieces_dict
+        persist['pieces'].update(self.blue_pieces_dict)
+        return persist
+
 
 
     def draw(self, surface):
@@ -130,8 +139,6 @@ class Movement(Screen):
                         spr.kill()
                         self.red_pieces_dict[spr.label] = Piece(spr.num, spr.co, self.red)
                         self.moving_piece = self.red_pieces_dict[spr.label]
-
-
                     elif self.turn == 'blue' and self.blue_pieces_dict.get((a,b)):
                         self.grab_piece = True
                         spr = self.blue_pieces_dict.get((a,b))
@@ -302,6 +309,7 @@ class Movement(Screen):
                         self.moving_piece = self.red_pieces_dict[p]
                     else:
                         self.moving_piece.kill()
+                        self.blue_pieces_dict.pop(self.moving_piece.label)
                         self.blue_pieces_dict[p] = Piece(self.moving_piece.num, p, self.red)
                         self.moving_piece = self.blue_pieces_dict[p]
 
